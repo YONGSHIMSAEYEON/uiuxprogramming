@@ -234,9 +234,20 @@ footer p {
   font-size: 14px;
 }
 
-/* ---------- 11. 좁은 화면(휴대폰) 보정 ---------- */
-@media (max-width: 600px) {
+/* ---------- 11. 태블릿·휴대폰 화면(768px 이하) ----------
+   화면 너비가 768px보다 좁아지면 가로로 놓였던 것들을
+   전부 세로로 쌓아서, 좁은 화면에서도 잘리지 않게 만든다. */
+@media (max-width: 768px) {
+
+  /* (1) 전체 글자와 바깥 여백을 조금 줄인다 */
+  body {
+    padding: 0 12px 36px;
+    font-size: 15px;
+  }
+
+  /* (2) 머리말 */
   header {
+    margin-bottom: 20px;
     padding: 28px 18px;
   }
 
@@ -244,11 +255,65 @@ footer p {
     font-size: 30px;
   }
 
+  header p {
+    margin-bottom: 18px;
+    font-size: 15px;
+  }
+
+  /* (3) 내비게이션을 세로로 배치 */
+  nav {
+    flex-direction: column;   /* 가로로 늘어서던 메뉴를 세로로 쌓음 */
+    align-items: stretch;     /* 가로 폭을 꽉 채워 누르기 쉽게 */
+    gap: 8px;
+  }
+
+  nav a {
+    display: block;
+    padding: 12px 14px;
+    font-size: 15px;
+  }
+
+  /* (4) 영역 상자의 여백과 글자 크기 조정 */
   section {
-    padding: 22px 18px;
+    margin-bottom: 20px;
+    padding: 22px 16px;
   }
 
   section h2 {
-    font-size: 22px;
+    margin-bottom: 14px;
+    font-size: 21px;
+  }
+
+  section h3 {
+    font-size: 17px;
+  }
+
+  section p {
+    font-size: 15px;
+  }
+
+  #steps li {
+    font-size: 15px;
+  }
+
+  /* (5) 기능 카드를 한 열로 배치 */
+  #features ul {
+    grid-template-columns: 1fr;   /* 칸을 하나로 만들어 카드가 세로로 쌓임 */
+    gap: 12px;
+  }
+
+  /* (6) 이메일 입력창과 버튼을 세로로 배치 */
+  #subscribe form {
+    flex-direction: column;   /* 나란히 있던 입력창과 버튼을 위아래로 */
+    align-items: stretch;
+  }
+
+  #subscribe input {
+    flex: none;               /* 가로로 늘어나던 설정 해제 */
+    width: 100%;
+  }
+
+  #subscribe button {
+    width: 100%;              /* 버튼도 가로 폭을 꽉 채움 */
   }
 }
