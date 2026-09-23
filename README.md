@@ -4,7 +4,7 @@
 
 UI/UX 프로그래밍 수업에서 한 학기 동안 발전시킬 서비스 소개 페이지입니다.
 
-- 배포 주소: https://gomeasy95.github.io/ux-programming-01/
+- 배포 주소: https://yongshimsaeyeon.github.io/uiuxprogramming/
 
 ## 주차별 작업
 
