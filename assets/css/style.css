@@ -160,3 +160,87 @@ section p {
   color: var(--main);           /* 숫자만 대표 색으로 */
   font-weight: bold;
 }
+
+/* ---------- 9. 무료로 시작하기(form) ---------- */
+#subscribe {
+  background-color: #eef3ff;    /* 마지막 영역은 배경색을 바꿔 행동을 유도 */
+  border-left-color: var(--main-dark);
+}
+
+#subscribe form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+#subscribe label {
+  width: 100%;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: bold;
+}
+
+#subscribe input {
+  flex: 1 1 240px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-size: 16px;
+}
+
+#subscribe input:focus {
+  outline: none;
+  border-color: var(--main);    /* 입력 중인 칸을 테두리 색으로 알려 줌 */
+}
+
+#subscribe button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--main);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#subscribe button:hover {
+  background-color: var(--main-dark);
+}
+
+/* ---------- 10. 꼬리말(footer) ---------- */
+footer {
+  max-width: 900px;
+  margin: 32px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+footer p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+/* ---------- 11. 좁은 화면(휴대폰) 보정 ---------- */
+@media (max-width: 600px) {
+  header {
+    padding: 28px 18px;
+  }
+
+  header h1 {
+    font-size: 30px;
+  }
+
+  section {
+    padding: 22px 18px;
+  }
+
+  section h2 {
+    font-size: 22px;
+  }
+}
