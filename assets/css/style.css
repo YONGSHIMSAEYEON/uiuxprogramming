@@ -1,0 +1,30 @@
+/* 공부메이트 서비스 소개 페이지 - 3주차 CSS
+   목표: 2주차에 만든 HTML 구조를 건드리지 않고,
+        글자 크기 / 색상 / 배경색 / 여백 / 테두리만으로
+        제목과 본문, 영역별 정보가 눈으로 구분되게 만든다. */
+
+/* ---------- 1. 색을 한 곳에서 관리 (색 이름표) ---------- */
+:root {
+  --main: #2f6fed;          /* 서비스 대표 색(파랑) */
+  --main-dark: #1b4bb8;     /* 강조용 진한 파랑 */
+  --text: #1f2430;          /* 본문 글자색 */
+  --text-soft: #5a6172;     /* 설명 글자색(조금 연하게) */
+  --line: #dfe4ee;          /* 테두리 선 색 */
+  --page-bg: #f4f6fb;       /* 페이지 배경색 */
+  --box-bg: #ffffff;        /* 내용 상자 배경색 */
+}
+
+/* ---------- 2. 기본값 정리 ---------- */
+* {
+  box-sizing: border-box;   /* 여백과 테두리를 크기 안에 포함해서 계산 */
+}
+
+body {
+  margin: 0;
+  padding: 0 16px 48px;     /* 좌우 여백 + 아래 여백 */
+  background-color: var(--page-bg);
+  color: var(--text);
+  font-family: "맑은 고딕", "Malgun Gothic", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;         /* 줄 간격을 넓혀 본문을 읽기 편하게 */
+}
