@@ -28,3 +28,135 @@ body {
   font-size: 16px;
   line-height: 1.7;         /* 줄 간격을 넓혀 본문을 읽기 편하게 */
 }
+
+/* ---------- 3. 머리말(header) ---------- */
+header {
+  max-width: 900px;         /* 화면이 넓어도 글이 너무 길게 늘어나지 않게 */
+  margin: 0 auto 32px;
+  padding: 40px 28px;
+  background-color: var(--main);   /* 대표 색 배경으로 맨 위를 확실히 구분 */
+  color: #ffffff;
+  border-radius: 0 0 16px 16px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0 0 8px;
+  font-size: 40px;          /* 서비스 이름이 가장 큰 글자 */
+  letter-spacing: -1px;
+}
+
+header p {
+  margin: 0 0 24px;
+  font-size: 17px;
+  color: #e6eeff;           /* 흰색보다 살짝 연하게 해서 제목과 구분 */
+}
+
+/* ---------- 4. 메뉴(nav) ---------- */
+nav {
+  display: flex;
+  flex-wrap: wrap;          /* 화면이 좁으면 줄바꿈 */
+  justify-content: center;
+  gap: 10px;
+}
+
+nav a {
+  padding: 9px 18px;
+  border: 2px solid #ffffff;    /* 테두리로 버튼처럼 보이게 */
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 15px;
+  text-decoration: none;        /* 밑줄 제거 */
+}
+
+nav a:hover {
+  background-color: #ffffff;    /* 마우스를 올리면 색이 뒤집힘 */
+  color: var(--main-dark);
+}
+
+/* ---------- 5. 본문 영역(main, section) ---------- */
+main {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+section {
+  margin-bottom: 28px;              /* 영역과 영역 사이 간격 */
+  padding: 28px 26px;
+  background-color: var(--box-bg);  /* 흰 상자 = 하나의 영역 */
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--main); /* 왼쪽 굵은 선으로 영역 시작을 표시 */
+  border-radius: 12px;
+}
+
+section h2 {
+  margin: 0 0 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--line);  /* 제목 아래 밑줄로 제목/본문 구분 */
+  color: var(--main-dark);
+  font-size: 26px;
+}
+
+section h3 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 19px;
+}
+
+section p {
+  margin: 0 0 12px;
+  color: var(--text-soft);      /* 본문은 제목보다 연한 색 */
+  font-size: 16px;
+}
+
+/* ---------- 6. 소개 영역의 이미지 ---------- */
+#about img {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;                 /* 가로에 맞춰 세로도 자동으로 */
+  margin: 20px auto 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* ---------- 7. 주요 기능 목록(ul) ---------- */
+#features ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;             /* 점 표시 제거 */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));  /* 넓으면 3칸, 좁으면 1칸 */
+  gap: 16px;
+}
+
+#features li {
+  padding: 20px 18px;
+  background-color: #f7f9ff;    /* 흰 상자 안에서 한 번 더 구분되는 연한 배경 */
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--main);
+  border-radius: 10px;
+}
+
+#features li p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* ---------- 8. 이용 방법 목록(ol) ---------- */
+#steps ol {
+  margin: 0;
+  padding-left: 22px;
+  color: var(--text-soft);
+}
+
+#steps li {
+  margin-bottom: 12px;
+  padding-left: 6px;
+  font-size: 16px;
+}
+
+#steps li::marker {
+  color: var(--main);           /* 숫자만 대표 색으로 */
+  font-weight: bold;
+}
