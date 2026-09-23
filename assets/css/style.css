@@ -19,6 +19,11 @@
   box-sizing: border-box;   /* 여백과 테두리를 크기 안에 포함해서 계산 */
 }
 
+img {
+  max-width: 100%;          /* 이미지가 들어 있는 상자보다 커지지 않게 (가로 스크롤 방지) */
+  height: auto;
+}
+
 body {
   margin: 0;
   padding: 0 16px 48px;     /* 좌우 여백 + 아래 여백 */
@@ -31,7 +36,8 @@ body {
 
 /* ---------- 3. 머리말(header) ---------- */
 header {
-  max-width: 900px;         /* 화면이 넓어도 글이 너무 길게 늘어나지 않게 */
+  width: 100%;              /* 화면 너비를 그대로 따라감 */
+  max-width: 900px;         /* 단, 넓은 화면에서도 900px을 넘지는 않음 */
   margin: 0 auto 32px;
   padding: 40px 28px;
   background-color: var(--main);   /* 대표 색 배경으로 맨 위를 확실히 구분 */
@@ -76,7 +82,8 @@ nav a:hover {
 
 /* ---------- 5. 본문 영역(main, section) ---------- */
 main {
-  max-width: 900px;
+  width: 100%;              /* 화면이 좁아지면 같이 좁아짐 */
+  max-width: 900px;         /* 넓은 화면에서는 900px에서 멈춤 */
   margin: 0 auto;
 }
 
@@ -213,6 +220,7 @@ section p {
 
 /* ---------- 10. 꼬리말(footer) ---------- */
 footer {
+  width: 100%;
   max-width: 900px;
   margin: 32px auto 0;
   padding-top: 20px;
