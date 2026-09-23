@@ -68,3 +68,70 @@ index.html  ──(link)──  assets/css/style.css
 - 색은 `:root`에 이름표(변수)로 모아 두고 가져다 썼습니다. 나중에 색을 바꿀 때 한 곳만 고치면 됩니다.
 - `@media (max-width: 600px)`로 휴대폰 화면에서는 글자 크기와 여백을 줄였습니다.
 - HTML은 `<link>` 한 줄만 추가했고 구조는 2주차 그대로입니다.
+
+## 4주차 반응형 CSS 적용
+
+새 페이지를 만들지 않고 3주차에 완성한 `index.html`과 `assets/css/style.css`를 그대로 이어서 수정했습니다.
+
+### 1. viewport 메타 태그
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+```
+
+휴대폰이 페이지를 강제로 축소해서 보여 주지 않고, 기기의 실제 너비에 맞춰 그리도록 하는 설정입니다.
+
+### 2. 유동 너비 (width, max-width)
+
+| 대상 | 설정 | 의미 |
+| --- | --- | --- |
+| `header` · `main` · `footer` | `width: 100%` + `max-width: 900px` | 화면이 좁으면 같이 좁아지고, 넓어도 900px에서 멈춤 |
+| `img` (전체) | `max-width: 100%` + `height: auto` | 이미지가 상자보다 커지지 않음 (가로 스크롤 방지) |
+| `#about img` | `width: 100%` + `max-width: 420px` | 너비에 맞춰 줄어들되 너무 커지지는 않음 |
+
+`* { box-sizing: border-box; }`를 함께 써서, 여백과 테두리를 포함한 크기로 계산되도록 했습니다. 이것이 없으면 `width: 100%`에 여백이 더해져 화면 밖으로 삐져나갑니다.
+
+### 3. 기능 카드의 CSS Grid 구성
+
+```css
+#features ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+}
+```
+
+`auto-fit`과 `minmax`를 써서 넓은 화면에서는 카드 3개가 가로로 놓이고, 좁아지면 자동으로 줄어듭니다.
+
+### 4. 768px 이하에서의 배치 전환
+
+```css
+@media (max-width: 768px) { ... }
+```
+
+| 요구 항목 | 사용한 속성 |
+| --- | --- |
+| 내비게이션을 세로로 배치 | `nav { flex-direction: column; align-items: stretch; }` |
+| 기능 카드를 한 열로 배치 | `#features ul { grid-template-columns: 1fr; }` |
+| 이메일 입력창과 버튼을 세로로 배치 | `#subscribe form { flex-direction: column; }` + `input`·`button`에 `width: 100%` |
+| 글자 크기와 여백 조정 | 본문 16px→15px, 제목 26px→21px, 영역 안쪽 여백 28px→16px, 바깥 여백 16px→12px |
+
+### 5. 화면 크기별 확인 결과
+
+개발자 도구 기준 세 가지 너비에서 확인했습니다.
+
+| 너비 | 메뉴 | 기능 카드 | 이메일 폼 |
+| --- | --- | --- | --- |
+| 1100px | 가로 한 줄 | 3열 | 입력창 + 버튼 가로 |
+| 768px | 세로 | 1열 | 세로 |
+| 390px | 세로 | 1열 | 세로 |
+
+### 6. 가로 스크롤 점검
+
+세 너비 모두에서 문서 전체 너비(`scrollWidth`)와 화면 너비(`clientWidth`)가 같은 값인 것을 확인했습니다. 값이 같다는 것은 화면 밖으로 튀어나간 요소가 없다는 뜻이며, 따라서 가로 스크롤이 생기지 않고 콘텐츠가 잘리거나 겹치지 않습니다.
+
+```
+1100px -> viewport 1100 / content 1100  (가로 스크롤 없음)
+ 768px -> viewport  768 / content  768  (가로 스크롤 없음)
+ 390px -> viewport  390 / content  390  (가로 스크롤 없음)
+```
