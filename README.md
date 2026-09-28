@@ -140,59 +140,92 @@ index.html  ──(link)──  assets/css/style.css
 
 ## 5주차 JavaScript 기능 추가
 
-4주차 페이지를 그대로 이어서, **"무료로 시작하기" 이메일 신청 폼**이 실제로 동작하도록 만들었습니다.
+4주차 페이지를 그대로 이어서, **"무료로 시작하기" 이메일 신청 폼**이 제출에 반응하도록 만들었습니다.
+HTML은 구조, CSS는 표현, JavaScript는 행동을 맡습니다.
 
 ```
-index.html ──(link)── assets/css/style.css
-           ──(script)── assets/js/script.js
+uiuxprogramming/
+├── index.html          구조
+├── script.js           행동 (5주차 추가)
+└── assets/
+    ├── css/style.css   표현
+    └── images/service.jpg
 ```
 
-### 1. script.js 연결과 요소 선택
+### 1. script.js 연결과 실행 확인
 
 ```html
-<script src="./assets/js/script.js" defer></script>
+  <script src="script.js"></script>
+</body>
 ```
 
-- `defer`: HTML을 다 읽은 뒤에 스크립트를 실행해서, 요소를 못 찾는 문제가 없게 했습니다.
-- `querySelector`로 폼, 이메일 입력칸, 버튼, 안내 문구(`#form-message`) 네 가지를 선택했습니다.
-- 폼에 `novalidate`를 붙여 브라우저 기본 경고창 대신 직접 만든 안내 문구가 보이게 했습니다.
+- `</body>` 바로 위에 두어, 버튼과 문구가 먼저 만들어진 뒤 JavaScript가 실행되게 했습니다.
+- `console.log("JavaScript가 연결되었습니다.")`로 개발자 도구 Console에서 연결을 확인했습니다.
 
-### 2. 이벤트 연결
+### 2. 신청 폼 네 요소에 id 지정 → querySelector로 선택
 
-| 이벤트 | 실행 함수 | 하는 일 |
+| id | 역할 | script.js 변수 |
 | --- | --- | --- |
-| 폼 `submit` (버튼 클릭·엔터) | `handleSubmit()` | 입력값을 검사하고 결과 안내 |
-| 입력칸 `input` (글자 입력) | `handleInput()` | 빨간 테두리 해제, 신청 완료 후 다른 이메일을 쓰면 버튼 되살림 |
+| `#subscribe-form` | 제출을 감지하는 폼 | `subscribeForm` |
+| `#email` | 이메일 입력창 | `emailInput` |
+| `#subscribeButton` | 신청 버튼 | `subscribeButton` |
+| `#subscribeMessage` | 결과 안내 문구 (`aria-live="polite"`) | `subscribeMessage` |
 
-### 3. 변수와 조건문으로 나눈 결과
+네 요소 모두 선택 결과가 `null`이 아닌 것을 Console에서 확인했습니다.
+폼에 `novalidate`를 붙여 브라우저 기본 경고창 대신 직접 만든 안내 문구가 보이게 했습니다.
+
+### 3. 변수와 자료형
+
+| 변수 | 선언 | 자료형 | 용도 |
+| --- | --- | --- | --- |
+| `serviceName` | const | String | 바뀌지 않는 서비스 이름 |
+| `isSubscribed` | let | Boolean | 신청 완료 여부 (false → true) |
+| `submitCount` | let | Number | 제출 횟수 |
+| `email` | const | String | 앞뒤 공백을 지운 입력값 |
+
+### 4. 함수와 조건문
+
+- `makeSubscribeMessage(email)`: 입력값을 받아 `if`로 판단하고, 상황에 맞는 문구를 `return`합니다.
+- `handleSubscribe(event)`: 폼이 제출되면 실행됩니다. `event.preventDefault()`로 새로고침을 막고 결과를 화면에 반영합니다.
+- `subscribeForm.addEventListener("submit", handleSubscribe)`: 버튼 클릭 또는 Enter → submit 발생 → `handleSubscribe` 실행.
 
 | 입력 상황 | 안내 문구 | 문구 스타일 | 버튼 |
 | --- | --- | --- | --- |
-| 빈칸 | 이메일을 입력해 주세요. | 빨강(`error`) + 입력칸 빨간 테두리 | 그대로 |
-| `@`나 `.`이 없음 | 이메일 형식이 올바르지 않아요. | 빨강(`error`) + 입력칸 빨간 테두리 | 그대로 |
-| 이미 신청한 이메일 | 이미 신청한 이메일이에요. | 파랑(`info`) | 그대로 |
-| 올바른 이메일 | ○○ 신청 완료! 첫 공부 계획 안내를 보내 드릴게요. | 초록(`success`) | **"신청 완료" + 비활성(회색)** |
-| 학교 이메일(`.ac.kr`) | 위 문구 + 프리미엄 3개월 무료 혜택 안내 | 초록(`success`) | **"신청 완료" + 비활성(회색)** |
+| 제출 전 | 이메일을 입력한 뒤 신청해 주세요. | 기본(흰 배경) | 무료로 시작하기 |
+| 빈칸 | 이메일을 입력한 뒤 신청해 주세요. | `is-error` 빨강 + 입력칸 빨간 테두리 | 그대로 |
+| `@`나 `.`이 없음 | 이메일 형식이 올바르지 않아요. | `is-error` 빨강 + 입력칸 빨간 테두리 | 그대로 |
+| 올바른 이메일 | ○○로 신청이 완료되었습니다. 첫 공부 계획 안내를 보내 드릴게요. | `is-success` 초록 | **"신청 완료" + 비활성** |
+| 학교 이메일(`.ac.kr`) | 위 문구 + 프리미엄 3개월 무료 혜택 안내 | `is-success` 초록 | **"신청 완료" + 비활성** |
 
-- `const email = emailInput.value.trim()`: 입력값을 변수에 담고 앞뒤 공백을 지웠습니다.
-- `const joinedEmails = []`: 신청한 이메일을 기억하는 배열로, 중복 신청을 막는 데 썼습니다.
-- `showMessage(문구, 종류)` 함수 하나로 문구와 class를 함께 바꿔 코드 반복을 줄였습니다.
+신청을 마치면 `isSubscribed === true`가 되어, 다시 제출해도 아무것도 바뀌지 않습니다(중복 신청 방지).
 
-### 4. 처리 결과에 따른 스타일·버튼 변경
+### 5. textContent와 classList로 화면 바꾸기
 
-- 안내 문구에 `error` / `success` / `info` class를 붙이면 CSS에서 글자색과 배경색이 바뀝니다.
-- 신청이 끝나면 `button.disabled = true`, `button.textContent = "신청 완료"`로 바꾸고, CSS `button:disabled`에서 회색 + 금지 커서로 표시합니다.
+- `subscribeMessage.textContent`로 안내 문구를 바꿉니다.
+- `subscribeMessage.classList.add("is-success")` / `add("is-error")`로 CSS 상태 class를 붙입니다.
+- `subscribeButton.textContent = "신청 완료"`, `subscribeButton.disabled = true`로 버튼을 완료 상태로 바꿉니다.
 
-### 5. PC·모바일 확인 결과
+```css
+#subscribeMessage.is-success { color: #245c3a; background-color: #e7f6ec; }
+#subscribeMessage.is-error   { color: #c62828; background-color: #fdecec; }
+#subscribe button:disabled   { background-color: #9aa3b5; cursor: not-allowed; }
+```
 
-1100px(PC)와 390px(모바일)에서 다섯 가지 경우를 모두 입력해 보았습니다.
+### 6. 완성 확인
+
+1100px(PC)와 390px(모바일)에서 직접 입력해 확인했습니다.
+
+- [x] script.js가 HTML에 연결되었는가 (Console에 연결 문장 출력)
+- [x] 네 요소의 선택 결과가 null이 아닌가
+- [x] 이메일 입력 후 완료 문구와 스타일이 바뀌는가
+- [x] 버튼이 신청 완료 상태로 비활성화되는가
+- [x] 모바일에서 입력창·버튼·문구가 잘리지 않는가
 
 ```
-빈칸          -> "이메일을 입력해 주세요."           빨강
-abc           -> "이메일 형식이 올바르지 않아요."     빨강
-me@test.com   -> "신청 완료! ..."   초록 / 버튼 "신청 완료"·비활성
-me@test.com   -> "이미 신청한 이메일이에요."          파랑
-kim@snu.ac.kr -> "신청 완료! 학교 이메일이라 ..."     초록 / 버튼 비활성
+빈칸          -> "이메일을 입력한 뒤 신청해 주세요."   is-error
+abc           -> "이메일 형식이 올바르지 않아요."       is-error
+me@test.com   -> "…로 신청이 완료되었습니다."          is-success / 버튼 "신청 완료"·비활성
+다시 제출      -> 변화 없음 (isSubscribed === true)
 1100px -> viewport 1100 / content 1100  (가로 스크롤 없음)
  390px -> viewport  390 / content  390  (가로 스크롤 없음)
 ```
