@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>공부메이트 | 서비스 소개</title>
   <link rel="stylesheet" href="./assets/css/style.css">
-  <script src="./assets/js/script.js" defer></script>
 </head>
 <body>
   <!-- UX 계획
@@ -65,7 +64,7 @@
 
     <section id="subscribe">
       <h2>무료로 시작하기</h2>
-      <form novalidate>
+      <form id="subscribe-form" novalidate>
         <label for="email">이메일</label>
         <input
           type="email"
@@ -73,14 +72,16 @@
           name="email"
           placeholder="name@example.com"
         >
-        <button type="submit">무료로 시작하기</button>
+        <button id="subscribeButton" type="submit">무료로 시작하기</button>
       </form>
-      <p id="form-message" class="form-message" aria-live="polite">이메일을 입력하면 첫 공부 계획 안내를 보내 드려요.</p>
+      <p id="subscribeMessage" aria-live="polite">이메일을 입력한 뒤 신청해 주세요.</p>
     </section>
   </main>
 
   <footer>
     <p>© 2026 공부메이트</p>
   </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
