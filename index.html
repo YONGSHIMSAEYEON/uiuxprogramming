@@ -105,6 +105,85 @@
         <li>자동으로 만들어진 오늘의 공부 계획을 확인합니다.</li>
         <li>공부를 마칠 때마다 체크하고 진도를 확인합니다.</li>
       </ol>
+
+      <!-- 7주차: 서비스의 핵심 행동 버튼 → 첫 공부 계획 만들기 흐름 -->
+      <button id="planStart" type="button" aria-controls="planFlow" aria-expanded="false">첫 공부 계획 만들기</button>
+
+      <section id="planFlow" aria-labelledby="planFlowTitle" hidden>
+        <h3 id="planFlowTitle">첫 공부 계획 만들기</h3>
+        <p id="planProgress" aria-live="polite">1 / 3 · 계획 만들기 단계</p>
+
+        <section class="plan-step" data-step="1">
+          <h4>1. 공부할 과목</h4>
+          <label for="subjectName">과목 이름</label>
+          <p class="plan-help" id="subjectHelp">이번 주에 가장 먼저 챙길 과목 하나를 적어 주세요. 예) 데이터베이스</p>
+          <input id="subjectName" type="text" maxlength="20"
+                 aria-describedby="subjectHelp subjectError">
+          <p id="subjectError" class="plan-error" role="alert"></p>
+          <div class="plan-actions">
+            <button id="planNext1" type="button">공부 목표 고르기</button>
+          </div>
+        </section>
+
+        <section class="plan-step" data-step="2" hidden>
+          <h4>2. 이번 주 목표</h4>
+          <label for="planGoal">공부 목표</label>
+          <select id="planGoal" aria-describedby="goalError">
+            <option value="">목표를 골라 주세요</option>
+            <option value="exam">시험 대비</option>
+            <option value="assignment">과제 제출</option>
+            <option value="review">매일 복습</option>
+          </select>
+          <p id="goalError" class="plan-error" role="alert"></p>
+
+          <label for="examDate" id="examLabel" hidden>시험 날짜</label>
+          <input id="examDate" type="date" aria-describedby="examError" hidden>
+          <p id="examError" class="plan-error" role="alert"></p>
+
+          <label for="studyTime">하루 공부 시간</label>
+          <select id="studyTime">
+            <option value="30">30분</option>
+            <option value="60" selected>1시간</option>
+            <option value="120">2시간</option>
+          </select>
+          <div class="plan-actions">
+            <button id="planBack2" type="button" class="is-secondary">이전</button>
+            <button id="planNext2" type="button">입력 내용 확인</button>
+          </div>
+        </section>
+
+        <section class="plan-step" data-step="3" hidden>
+          <h4>3. 입력 내용 확인</h4>
+          <dl id="planSummary">
+            <dt>과목</dt><dd id="summarySubject"></dd>
+            <dt>목표</dt><dd id="summaryGoal"></dd>
+            <dt>하루 공부 시간</dt><dd id="summaryTime"></dd>
+          </dl>
+          <p class="plan-help">바꿀 내용이 있으면 '이전'을 눌러 고칠 수 있어요.</p>
+          <div class="plan-actions">
+            <button id="planBack3" type="button" class="is-secondary">이전</button>
+            <button id="planComplete" type="button">계획 만들기</button>
+          </div>
+        </section>
+
+        <section class="plan-step" data-step="4" hidden>
+          <h4>공부 계획이 만들어졌어요</h4>
+          <p id="planResult" class="status-message is-success"></p>
+          <p class="plan-help">위의 '미리 써 보기 &gt; 오늘의 할 일'에서 오늘 할 공부를 체크해 보세요.</p>
+          <div class="plan-actions">
+            <button id="planRestart" type="button">다시 만들기</button>
+          </div>
+        </section>
+
+        <dialog id="planConfirm" aria-labelledby="confirmTitle">
+          <h4 id="confirmTitle">이 내용으로 계획을 만들까요?</h4>
+          <p id="confirmText"></p>
+          <div class="plan-actions">
+            <button id="confirmCancel" type="button" class="is-secondary">다시 확인</button>
+            <button id="confirmSubmit" type="button">계획 확정</button>
+          </div>
+        </dialog>
+      </section>
     </section>
 
     <section id="subscribe">
