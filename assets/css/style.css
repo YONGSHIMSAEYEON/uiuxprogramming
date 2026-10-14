@@ -252,6 +252,168 @@ section p {
   cursor: not-allowed;
 }
 
+#subscribeMessage.is-ready {        /* 6주차: 입력 중 형식이 맞으면 파랑 */
+  background-color: #e8f0ff;
+  color: var(--main-dark);
+}
+
+#subscribe input.is-ready {         /* 형식이 맞는 입력칸은 파란 테두리 */
+  border-color: var(--main);
+}
+
+/* ---------- 9-2. 6주차: 미리 써 보기 탭 ----------
+   script.js가 선택한 탭에 is-active를 붙이고,
+   나머지 탭 내용에는 hidden을 붙여 하나만 보이게 한다. */
+.tab-list {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 0;
+  border-bottom: 2px solid var(--line);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 10px;
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background-color: #f4f6fb;
+  color: var(--text-soft);
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tab-button:hover {
+  color: var(--main-dark);
+}
+
+.tab-button.is-active {             /* 선택된 탭: 대표 색 배경 + 흰 글자 */
+  background-color: var(--main);
+  border-color: var(--main);
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.tab-panel {
+  padding: 20px 4px 0;
+}
+
+.tab-panel[hidden] {                /* 선택되지 않은 탭 내용은 숨김 */
+  display: none;
+}
+
+.tab-panel label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.todo-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.todo-list li {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.todo-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.todo-list input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.todo-list li.is-done {             /* 체크한 할 일: 연초록 + 취소선 */
+  background-color: #e7f6ec;
+  color: var(--text-soft);
+  text-decoration: line-through;
+}
+
+#studyHours {
+  width: 100%;
+}
+
+.progress-track {
+  height: 16px;
+  margin: 12px 0;
+  background-color: #e6eaf2;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background-color: var(--main);
+  transition: width 0.2s;
+}
+
+.progress-bar.is-goal {             /* 목표 달성: 초록 막대 */
+  background-color: #2e9d57;
+}
+
+#alarmTime {
+  width: 100%;
+  max-width: 320px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+}
+
+#alarmButton {
+  margin-left: 8px;
+  padding: 10px 20px;
+  border: 2px solid var(--main);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: var(--main-dark);
+  font-size: 16px;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#alarmButton.is-on {                /* 알림 켜짐: 대표 색으로 채운 버튼 */
+  background-color: var(--main);
+  color: #ffffff;
+}
+
+#alarmButton:disabled {             /* 시간을 고르기 전: 회색 + 누를 수 없음 */
+  border-color: #c4cad6;
+  color: #9aa3b5;
+  cursor: not-allowed;
+}
+
+.status-message {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: #f4f6fb;
+  font-size: 15px;
+}
+
+.status-message.is-success {        /* 완료·달성·켜짐: 초록 */
+  background-color: #e7f6ec;
+  color: #245c3a;
+  font-weight: bold;
+}
+
 /* ---------- 10. 꼬리말(footer) ---------- */
 footer {
   width: 100%;
@@ -349,5 +511,24 @@ footer p {
 
   #subscribe button {
     width: 100%;              /* 버튼도 가로 폭을 꽉 채움 */
+  }
+
+  /* (7) 6주차: 탭 글자를 줄이고, 알림 시간 선택과 버튼을 세로로 */
+  .tab-list {
+    gap: 4px;
+  }
+
+  .tab-button {
+    padding: 10px 4px;
+    font-size: 14px;
+  }
+
+  #alarmTime {
+    max-width: none;
+  }
+
+  #alarmButton {
+    width: 100%;
+    margin: 10px 0 0;
   }
 }

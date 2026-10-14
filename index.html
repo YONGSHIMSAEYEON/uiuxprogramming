@@ -18,6 +18,7 @@
     <nav aria-label="주요 메뉴">
       <a href="#about">서비스 소개</a>
       <a href="#features">주요 기능</a>
+      <a href="#planner">미리 써 보기</a>
       <a href="#steps">이용 방법</a>
       <a href="#subscribe">무료로 시작하기</a>
     </nav>
@@ -51,6 +52,50 @@
           <p>정해 둔 시간이 되면 오늘 공부할 내용을 알려 줍니다.</p>
         </li>
       </ul>
+    </section>
+
+    <section id="planner">
+      <h2>미리 써 보기</h2>
+      <p>공부메이트의 세 가지 기능을 탭으로 바꿔 가며 직접 눌러 보세요.</p>
+
+      <div class="tab-list" role="tablist" aria-label="공부메이트 기능 미리 보기">
+        <button type="button" class="tab-button is-active" role="tab" id="tab-todo" aria-controls="panel-todo" aria-selected="true" data-tab="todo">오늘의 할 일</button>
+        <button type="button" class="tab-button" role="tab" id="tab-progress" aria-controls="panel-progress" aria-selected="false" data-tab="progress">진도 그래프</button>
+        <button type="button" class="tab-button" role="tab" id="tab-alarm" aria-controls="panel-alarm" aria-selected="false" data-tab="alarm">공부 알림</button>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-todo" aria-labelledby="tab-todo">
+        <h3>오늘의 할 일</h3>
+        <ul class="todo-list">
+          <li><label><input type="checkbox" class="todo-check"> 데이터베이스 강의 1강 듣기</label></li>
+          <li><label><input type="checkbox" class="todo-check"> UX프로그래밍 과제 제출</label></li>
+          <li><label><input type="checkbox" class="todo-check"> 영어 단어 30개 복습</label></li>
+          <li><label><input type="checkbox" class="todo-check"> 다음 주 강의 예습</label></li>
+        </ul>
+        <p id="todoMessage" class="status-message" aria-live="polite">4개 중 0개 완료 (0%) — 하나씩 체크해 보세요.</p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-progress" aria-labelledby="tab-progress" hidden>
+        <h3>진도 그래프</h3>
+        <label for="studyHours">오늘 공부한 시간</label>
+        <input type="range" id="studyHours" min="0" max="6" step="0.5" value="0">
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <p id="progressMessage" class="status-message" aria-live="polite">오늘 목표는 3시간이에요. 막대를 움직여 보세요.</p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-alarm" aria-labelledby="tab-alarm" hidden>
+        <h3>공부 알림</h3>
+        <label for="alarmTime">알림 받을 시간</label>
+        <select id="alarmTime">
+          <option value="">시간을 골라 주세요</option>
+          <option value="07:00">아침 7시</option>
+          <option value="12:30">점심 12시 30분</option>
+          <option value="19:00">저녁 7시</option>
+          <option value="22:00">밤 10시</option>
+        </select>
+        <button type="button" id="alarmButton" aria-pressed="false" disabled>알림 켜기</button>
+        <p id="alarmMessage" class="status-message" aria-live="polite">먼저 알림 받을 시간을 골라 주세요.</p>
+      </div>
     </section>
 
     <section id="steps">
