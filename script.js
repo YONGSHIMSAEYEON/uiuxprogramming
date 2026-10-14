@@ -1,10 +1,12 @@
-// 공부메이트 - 5·6주차 JavaScript
+// 공부메이트 - 5·6·7주차 JavaScript
 // 5주차 기능: "무료로 시작하기" 이메일 신청
 //   폼을 제출하면 입력값을 확인해서 상황에 맞는 안내 문구를 보여 주고,
 //   신청이 끝나면 버튼을 "신청 완료" 상태로 바꿔 중복 신청을 막는다.
 // 6주차 기능: 다양한 이벤트(click · input · change)와 탭 UI
 //   "미리 써 보기" 탭 3개, 할 일 체크, 공부 시간 막대, 알림 설정,
 //   이메일을 입력하는 동안 바로 형식을 알려 주는 안내.
+// 7주차 기능: 사용자 흐름 "첫 공부 계획 만들기"
+//   시작 → 과목 입력 → 목표 선택 → 확인(확정 팝업) → 완료 / 다시 만들기.
 
 // 개발자 도구 Console에서 script.js 연결 여부를 확인하기 위한 문장
 console.log("JavaScript가 연결되었습니다.");
@@ -244,3 +246,203 @@ function handleAlarmClick() {
 
 alarmTime.addEventListener("change", handleAlarmChange);
 alarmButton.addEventListener("click", handleAlarmClick);
+
+// =====================================================================
+// 7주차: 사용자 흐름 — 첫 공부 계획 만들기
+//   시작 → 1 과목 입력 → 2 목표 선택 → 3 확인(확정 팝업) → 완료
+// =====================================================================
+
+// ---------- 11. 흐름에 쓰는 요소 선택 ----------
+const planStart = document.querySelector("#planStart");
+const planFlow = document.querySelector("#planFlow");
+const planSteps = document.querySelectorAll(".plan-step");
+const planProgress = document.querySelector("#planProgress");
+
+const subjectName = document.querySelector("#subjectName");
+const subjectError = document.querySelector("#subjectError");
+const planGoal = document.querySelector("#planGoal");
+const goalError = document.querySelector("#goalError");
+const examLabel = document.querySelector("#examLabel");
+const examDate = document.querySelector("#examDate");
+const examError = document.querySelector("#examError");
+const studyTime = document.querySelector("#studyTime");
+
+const planConfirm = document.querySelector("#planConfirm");
+const confirmText = document.querySelector("#confirmText");
+const planResult = document.querySelector("#planResult");
+
+const goalNames = { exam: "시험 대비", assignment: "과제 제출", review: "매일 복습" };
+
+// ---------- 12. 현재 단계만 보여 주는 함수 ----------
+function showStep(step) {
+  planSteps.forEach(function (item) {
+    item.hidden = Number(item.dataset.step) !== step;
+  });
+
+  planProgress.textContent = step <= 3
+    ? step + " / 3 · 계획 만들기 단계"
+    : "계획 완성";
+  planProgress.classList.toggle("is-done", step === 4);
+}
+
+// 오류 표시 / 지우기를 한 곳에서 처리
+function showError(input, errorBox, message) {
+  errorBox.textContent = message;
+  input.classList.add("has-error");
+  input.setAttribute("aria-invalid", "true");
+  input.focus();
+}
+
+function clearError(input, errorBox) {
+  errorBox.textContent = "";
+  input.classList.remove("has-error");
+  input.removeAttribute("aria-invalid");
+}
+
+// ---------- 13. 시작: 핵심 행동 버튼 → 1단계 ----------
+planStart.addEventListener("click", function () {
+  planFlow.hidden = false;
+  planStart.setAttribute("aria-expanded", "true");
+  showStep(1);
+  subjectName.focus();
+});
+
+// ---------- 14. 1단계: 과목 이름 검사 ----------
+// 행동: '공부 목표 고르기' click → 조건: trim()한 과목 이름이 비었는가?
+// → 비었으면 현재 단계에 머물며 고칠 방법 안내 / 있으면 2단계로
+document.querySelector("#planNext1").addEventListener("click", function () {
+  if (subjectName.value.trim() === "") {
+    showError(subjectName, subjectError, "공부할 과목 이름을 입력해 주세요. 예) 데이터베이스");
+    return;
+  }
+  clearError(subjectName, subjectError);
+  showStep(2);
+  planGoal.focus();
+});
+
+// 입력을 고치기 시작하면 오류 표시를 지움
+subjectName.addEventListener("input", function () {
+  if (subjectName.value.trim() !== "") {
+    clearError(subjectName, subjectError);
+  }
+});
+
+// ---------- 15. 2단계: 목표에 따라 시험 날짜 칸을 보이거나 숨김 ----------
+planGoal.addEventListener("change", function () {
+  const isExam = planGoal.value === "exam";
+  examLabel.hidden = !isExam;
+  examDate.hidden = !isExam;
+
+  if (planGoal.value !== "") {
+    clearError(planGoal, goalError);
+  }
+  if (!isExam) {
+    examDate.value = "";              // 보이지 않는 칸은 값도 검사도 하지 않음
+    clearError(examDate, examError);
+  }
+});
+
+examDate.addEventListener("change", function () {
+  clearError(examDate, examError);
+});
+
+// 오늘 날짜를 "2026-10-14" 형식으로 (input type="date"와 같은 형식)
+function todayText() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return now.getFullYear() + "-" + month + "-" + day;
+}
+
+document.querySelector("#planNext2").addEventListener("click", function () {
+  if (planGoal.value === "") {
+    showError(planGoal, goalError, "이번 주 공부 목표를 하나 골라 주세요.");
+    return;
+  }
+  clearError(planGoal, goalError);
+
+  if (planGoal.value === "exam") {
+    if (examDate.value === "") {
+      showError(examDate, examError, "시험 대비를 골랐다면 시험 날짜를 선택해 주세요.");
+      return;
+    }
+    if (examDate.value < todayText()) {
+      showError(examDate, examError, "이미 지난 날짜예요. 오늘 이후의 시험 날짜를 골라 주세요.");
+      return;
+    }
+  }
+  clearError(examDate, examError);
+
+  showSummary();
+  showStep(3);
+});
+
+// ---------- 16. 3단계: 입력·선택한 값을 확인 화면에 반영 ----------
+function goalText() {
+  let text = goalNames[planGoal.value];
+  if (planGoal.value === "exam") {
+    text += " (시험일 " + examDate.value + ")";
+  }
+  return text;
+}
+
+function showSummary() {
+  document.querySelector("#summarySubject").textContent = subjectName.value.trim();
+  document.querySelector("#summaryGoal").textContent = goalText();
+  document.querySelector("#summaryTime").textContent = studyTime.options[studyTime.selectedIndex].text;
+}
+
+// 이전: 값은 그대로 두고 단계만 이동
+document.querySelector("#planBack2").addEventListener("click", function () {
+  showStep(1);
+  subjectName.focus();
+});
+document.querySelector("#planBack3").addEventListener("click", function () {
+  showStep(2);
+  planGoal.focus();
+});
+
+// ---------- 17. 확정 팝업 → 완료 ----------
+document.querySelector("#planComplete").addEventListener("click", function () {
+  confirmText.textContent = subjectName.value.trim() + " · " + goalText() + " · 하루 "
+    + studyTime.options[studyTime.selectedIndex].text;
+  planConfirm.showModal();
+});
+
+// 다시 확인(취소): 팝업만 닫고 확인 화면과 값은 그대로
+document.querySelector("#confirmCancel").addEventListener("click", function () {
+  planConfirm.close();
+});
+
+document.querySelector("#confirmSubmit").addEventListener("click", function () {
+  planConfirm.close();
+  planResult.textContent = subjectName.value.trim() + " · " + goalText() + " 계획이 완성되었습니다. "
+    + "매일 " + studyTime.options[studyTime.selectedIndex].text + "씩 오늘의 할 일로 나눠 드릴게요.";
+  planStart.textContent = "공부 계획 완성";
+  planStart.disabled = true;
+  showStep(4);
+  document.querySelector("#planRestart").focus();
+});
+
+// ---------- 18. 다시 만들기: 입력·선택·오류·진행 상태 초기화 ----------
+document.querySelector("#planRestart").addEventListener("click", function () {
+  subjectName.value = "";
+  planGoal.value = "";
+  examDate.value = "";
+  studyTime.value = "60";
+  examLabel.hidden = true;
+  examDate.hidden = true;
+  [subjectName, planGoal, examDate].forEach(function (input) {
+    input.classList.remove("has-error");
+    input.removeAttribute("aria-invalid");
+  });
+  subjectError.textContent = "";
+  goalError.textContent = "";
+  examError.textContent = "";
+  planResult.textContent = "";
+
+  planStart.textContent = "첫 공부 계획 만들기";
+  planStart.disabled = false;
+  showStep(1);
+  subjectName.focus();
+});
