@@ -575,7 +575,8 @@ section p {
   color: var(--main-dark);
 }
 
-#planConfirm {                      /* 확정 팝업 */
+#planConfirm,
+#deleteConfirm {                    /* 확정 팝업 · 삭제 확인 팝업 */
   width: calc(100% - 32px);
   max-width: 420px;
   padding: 24px;
@@ -583,12 +584,166 @@ section p {
   border-radius: 12px;
 }
 
-#planConfirm::backdrop {
+#planConfirm::backdrop,
+#deleteConfirm::backdrop {
   background-color: rgba(31, 36, 48, 0.6);
 }
 
-#planConfirm p {
+#planConfirm p,
+#deleteConfirm p {
   word-break: break-all;
+}
+
+/* ---------- 9-4. 8주차: 내 공부 계획 목록 ----------
+   저장한 계획을 카드로 보여 주고, 결과가 없거나 저장에 실패하면
+   상태 class(is-error / is-new / is-past)로 색을 바꿔 알려 준다. */
+.status-message.is-error {          /* 저장 실패(중복·가득 참): 빨강 */
+  background-color: #fdecec;
+  color: #a12424;
+  font-weight: bold;
+}
+
+.plan-actions button.is-danger {    /* 삭제 확정: 빨간 버튼 */
+  border-color: #c62828;
+  background-color: #c62828;
+}
+
+#planSave:disabled {                /* 저장 완료: 회색 + 누를 수 없음 */
+  border-color: #9aa3b5;
+  background-color: #9aa3b5;
+  cursor: not-allowed;
+}
+
+#planList {
+  margin: 20px 0 0;
+  padding: 22px 20px;
+  border-left-color: #2e9d57;       /* 계획 만들기(파랑)와 구분되는 초록 선 */
+}
+
+#planList label {
+  display: block;
+  margin: 14px 0 6px;
+  font-weight: bold;
+}
+
+#listFilter {
+  width: 100%;
+  max-width: 360px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-size: 16px;
+  font-family: inherit;
+}
+
+#planItems {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+#planItems:empty,
+#listEmpty[hidden],
+#listShowAll[hidden],
+.plan-item-detail[hidden] {
+  display: none;
+}
+
+.plan-item {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: #f7f9ff;
+}
+
+.plan-item.is-new {                 /* 방금 저장한 계획: 초록 테두리 */
+  border-color: #2e9d57;
+  background-color: #eefaf2;
+}
+
+.plan-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-item-subject {
+  font-size: 17px;
+  word-break: break-all;
+}
+
+.goal-tag {                         /* 목표 이름표: 목표마다 색이 다름 */
+  padding: 2px 10px;
+  border-radius: 999px;
+  background-color: #e3ebfd;
+  color: var(--main-dark);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.goal-tag.is-exam {
+  background-color: #fdeaea;
+  color: #a12424;
+}
+
+.goal-tag.is-assignment {
+  background-color: #fff3d6;
+  color: #8a5a00;
+}
+
+.goal-tag.is-review {
+  background-color: #e7f6ec;
+  color: #245c3a;
+}
+
+#planItems .plan-item-detail {
+  margin: 10px 0 0;
+  color: var(--text);
+  font-size: 14px;
+  word-break: break-all;
+}
+
+#planItems .plan-item-detail.is-past { /* 시험일이 지난 계획: 빨간 글자 */
+  color: #c62828;
+  font-weight: bold;
+}
+
+.plan-item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.plan-item-actions button {
+  padding: 8px 14px;
+  border: 1px solid var(--main);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: var(--main-dark);
+  font-size: 14px;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.plan-item-actions .item-delete {
+  border-color: #c62828;
+  color: #c62828;
+}
+
+#listEmpty {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+
+#listEmpty p {
+  margin: 0;
 }
 
 /* ---------- 10. 꼬리말(footer) ---------- */
@@ -742,5 +897,22 @@ footer p {
 
   #planSummary dd {
     margin-bottom: 8px;
+  }
+
+  /* (9) 8주차: 내 공부 계획 목록의 선택칸·카드 버튼을 가로 꽉 채움 */
+  #planList {
+    padding: 16px 12px;
+  }
+
+  #listFilter {
+    max-width: none;
+  }
+
+  .plan-item {
+    padding: 12px;
+  }
+
+  .plan-item-actions button {
+    flex: 1;                          /* 자세히 보기 · 삭제를 반반 나눠 누르기 쉽게 */
   }
 }
