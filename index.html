@@ -20,6 +20,7 @@
       <a href="#features">주요 기능</a>
       <a href="#planner">미리 써 보기</a>
       <a href="#steps">이용 방법</a>
+      <a href="#planList">내 공부 계획</a>
       <a href="#subscribe">무료로 시작하기</a>
     </nav>
   </header>
@@ -170,8 +171,11 @@
           <h4>공부 계획이 만들어졌어요</h4>
           <p id="planResult" class="status-message is-success"></p>
           <p class="plan-help">위의 '미리 써 보기 &gt; 오늘의 할 일'에서 오늘 할 공부를 체크해 보세요.</p>
+          <!-- 8주차: 완성한 계획을 '내 공부 계획' 목록에 저장 -->
+          <p id="saveMessage" class="status-message" aria-live="polite">이 계획을 '내 공부 계획' 목록에 저장해 두면 언제든 다시 열어 볼 수 있어요.</p>
           <div class="plan-actions">
-            <button id="planRestart" type="button">다시 만들기</button>
+            <button id="planRestart" type="button" class="is-secondary">다시 만들기</button>
+            <button id="planSave" type="button">내 계획 목록에 저장</button>
           </div>
         </section>
 
@@ -181,6 +185,40 @@
           <div class="plan-actions">
             <button id="confirmCancel" type="button" class="is-secondary">다시 확인</button>
             <button id="confirmSubmit" type="button">계획 확정</button>
+          </div>
+        </dialog>
+      </section>
+
+      <!-- 8주차(중간고사): 저장한 계획 목록 → 목표로 찾기 · 자세히 보기 · 삭제(취소) -->
+      <section id="planList" aria-labelledby="planListTitle">
+        <h3 id="planListTitle">내 공부 계획</h3>
+        <p class="plan-help">저장한 계획을 목표별로 찾아보고, 다 끝난 계획은 지울 수 있어요. (최대 5개)</p>
+
+        <label for="listFilter">목표로 찾기</label>
+        <select id="listFilter">
+          <option value="all">전체 보기</option>
+          <option value="exam">시험 대비</option>
+          <option value="assignment">과제 제출</option>
+          <option value="review">매일 복습</option>
+        </select>
+
+        <p id="listMessage" class="status-message" aria-live="polite">저장한 계획 0개</p>
+        <ul id="planItems"></ul>
+
+        <div id="listEmpty">
+          <p id="listEmptyText"></p>
+          <div class="plan-actions">
+            <button id="listShowAll" type="button" class="is-secondary">전체 보기</button>
+            <button id="listNewPlan" type="button">첫 공부 계획 만들기</button>
+          </div>
+        </div>
+
+        <dialog id="deleteConfirm" aria-labelledby="deleteTitle">
+          <h4 id="deleteTitle">이 계획을 지울까요?</h4>
+          <p id="deleteText"></p>
+          <div class="plan-actions">
+            <button id="deleteCancel" type="button" class="is-secondary">취소</button>
+            <button id="deleteSubmit" type="button" class="is-danger">삭제</button>
           </div>
         </dialog>
       </section>
