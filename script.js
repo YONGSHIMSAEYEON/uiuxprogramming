@@ -1,4 +1,4 @@
-// 공부메이트 - 5·6·7주차 JavaScript
+// 공부메이트 - 5·6·7·8주차 JavaScript
 // 5주차 기능: "무료로 시작하기" 이메일 신청
 //   폼을 제출하면 입력값을 확인해서 상황에 맞는 안내 문구를 보여 주고,
 //   신청이 끝나면 버튼을 "신청 완료" 상태로 바꿔 중복 신청을 막는다.
@@ -7,6 +7,9 @@
 //   이메일을 입력하는 동안 바로 형식을 알려 주는 안내.
 // 7주차 기능: 사용자 흐름 "첫 공부 계획 만들기"
 //   시작 → 과목 입력 → 목표 선택 → 확인(확정 팝업) → 완료 / 다시 만들기.
+// 8주차(중간고사) 기능: "내 공부 계획" 목록
+//   완료 화면에서 저장(중복·최대 개수 검사) → 목록에 카드 추가
+//   → 목표로 찾기(결과 없음 안내) · 자세히 보기 · 삭제(확인 팝업, 취소 가능).
 
 // 개발자 도구 Console에서 script.js 연결 여부를 확인하기 위한 문장
 console.log("JavaScript가 연결되었습니다.");
@@ -425,7 +428,8 @@ document.querySelector("#confirmSubmit").addEventListener("click", function () {
 });
 
 // ---------- 18. 다시 만들기: 입력·선택·오류·진행 상태 초기화 ----------
-document.querySelector("#planRestart").addEventListener("click", function () {
+// 8주차: '새 계획 만들기' 버튼에서도 쓰도록 함수로 분리
+function resetPlan() {
   subjectName.value = "";
   planGoal.value = "";
   examDate.value = "";
@@ -443,6 +447,292 @@ document.querySelector("#planRestart").addEventListener("click", function () {
 
   planStart.textContent = "첫 공부 계획 만들기";
   planStart.disabled = false;
+  resetSaveState();
   showStep(1);
   subjectName.focus();
+}
+
+document.querySelector("#planRestart").addEventListener("click", resetPlan);
+
+// =====================================================================
+// 8주차(중간고사): 내 공부 계획 목록
+//   완료 → [내 계획 목록에 저장] → 목록 카드 → 목표로 찾기 / 자세히 보기 / 삭제
+// =====================================================================
+
+// ---------- 19. 목록에 쓰는 요소와 상태 ----------
+const planSave = document.querySelector("#planSave");
+const saveMessage = document.querySelector("#saveMessage");
+const listFilter = document.querySelector("#listFilter");
+const listMessage = document.querySelector("#listMessage");
+const planItems = document.querySelector("#planItems");
+const listEmpty = document.querySelector("#listEmpty");
+const listEmptyText = document.querySelector("#listEmptyText");
+const listShowAll = document.querySelector("#listShowAll");
+const listNewPlan = document.querySelector("#listNewPlan");
+const deleteConfirm = document.querySelector("#deleteConfirm");
+const deleteText = document.querySelector("#deleteText");
+
+const maxPlans = 5;               // 목록에 둘 수 있는 계획 수
+const storageKey = "studymate-plans";
+let savedPlans = loadPlans();     // Array: 저장한 계획 { id, subject, goal, examDate, timeText, savedDate }
+let currentSavedId = null;        // 지금 완료 화면의 계획이 저장됐다면 그 id
+let deleteTargetId = null;        // 삭제 팝업에서 지울 계획의 id
+let newPlanId = null;             // 방금 저장해서 초록으로 강조할 계획의 id
+
+// 새로고침해도 목록이 남도록 브라우저 저장소(localStorage)에 보관
+// (저장소를 쓸 수 없는 브라우저에서는 빈 목록으로 시작)
+function loadPlans() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function storePlans() {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(savedPlans));
+  } catch (error) {
+    console.log("저장소를 쓸 수 없어 이번 방문 동안만 목록을 유지합니다.");
+  }
+}
+
+// 저장 버튼과 안내 문구를 처음 상태로
+function resetSaveState() {
+  currentSavedId = null;
+  planSave.disabled = false;
+  planSave.textContent = "내 계획 목록에 저장";
+  saveMessage.textContent = "이 계획을 '내 공부 계획' 목록에 저장해 두면 언제든 다시 열어 볼 수 있어요.";
+  saveMessage.classList.remove("is-error", "is-success");
+}
+
+function showSaveError(message) {
+  saveMessage.textContent = message;
+  saveMessage.classList.remove("is-success");
+  saveMessage.classList.add("is-error");
+  planSave.focus();
+}
+
+// ---------- 20. 저장: 완료한 계획을 목록에 추가 ----------
+// 행동: '내 계획 목록에 저장' click
+// → 조건 1: 목록이 가득 찼는가? / 조건 2: 같은 과목이 이미 있는가?
+// → 실패하면 이유와 고칠 방법 안내(완료 화면 유지) / 성공하면 목록에 추가
+planSave.addEventListener("click", function () {
+  const subject = subjectName.value.trim();
+
+  if (savedPlans.length >= maxPlans) {
+    showSaveError("목록은 최대 " + maxPlans + "개까지예요. 아래 '내 공부 계획'에서 다 끝난 계획을 지운 뒤 다시 저장해 주세요.");
+    return;
+  }
+
+  const samePlan = savedPlans.find(function (plan) {
+    return plan.subject.toLowerCase() === subject.toLowerCase();
+  });
+  if (samePlan) {
+    showSaveError("'" + subject + "' 계획이 이미 목록에 있어요. 목록에서 예전 계획을 지운 뒤 저장하거나, '다시 만들기'로 다른 과목을 만들어 주세요.");
+    return;
+  }
+
+  const plan = {
+    id: Date.now(),
+    subject: subject,
+    goal: planGoal.value,
+    examDate: examDate.value,
+    timeText: studyTime.options[studyTime.selectedIndex].text,
+    savedDate: todayText()
+  };
+  savedPlans.push(plan);
+  storePlans();
+
+  currentSavedId = plan.id;
+  newPlanId = plan.id;
+  planSave.disabled = true;
+  planSave.textContent = "저장 완료";
+  saveMessage.textContent = "'" + subject + "' 계획을 저장했어요. 아래 '내 공부 계획'에서 다시 열어 볼 수 있어요.";
+  saveMessage.classList.remove("is-error");
+  saveMessage.classList.add("is-success");
+
+  listFilter.value = "all";       // 다른 목표로 찾던 중이어도 방금 저장한 계획이 보이도록
+  renderList("'" + subject + "' 계획을 목록에 추가했어요.");
 });
+
+// ---------- 21. 목록 그리기: 목표로 찾기 + 결과 없음 안내 ----------
+// 시험 날짜까지 남은 날 (오늘 = 0, 지났으면 음수)
+function daysUntil(dateText) {
+  const oneDay = 24 * 60 * 60 * 1000;
+  return Math.round((new Date(dateText) - new Date(todayText())) / oneDay);
+}
+
+function detailText(plan) {
+  let text = "목표: " + goalNames[plan.goal];
+  if (plan.goal === "exam") {
+    const days = daysUntil(plan.examDate);
+    if (days > 0) {
+      text += " (시험일 " + plan.examDate + ", D-" + days + ")";
+    } else if (days === 0) {
+      text += " (시험일 " + plan.examDate + ", 오늘이 시험날이에요!)";
+    } else {
+      text += " (시험일 " + plan.examDate + " — 이미 지났어요. 다 끝난 계획이면 지워 주세요.)";
+    }
+  }
+  return text + " · 하루 " + plan.timeText + " · 저장한 날 " + plan.savedDate;
+}
+
+function makePlanItem(plan) {
+  const item = document.createElement("li");
+  item.className = "plan-item";
+  item.dataset.id = plan.id;
+  item.classList.toggle("is-new", plan.id === newPlanId);
+
+  const head = document.createElement("div");
+  head.className = "plan-item-head";
+  const subject = document.createElement("strong");
+  subject.className = "plan-item-subject";
+  subject.textContent = plan.subject;          // 입력값은 textContent로만 넣음
+  const tag = document.createElement("span");
+  tag.className = "goal-tag is-" + plan.goal;
+  tag.textContent = goalNames[plan.goal];
+  head.append(subject, tag);
+
+  const detail = document.createElement("p");
+  detail.className = "plan-item-detail";
+  detail.id = "detail-" + plan.id;
+  detail.textContent = detailText(plan);
+  detail.classList.toggle("is-past", plan.goal === "exam" && daysUntil(plan.examDate) < 0);
+  detail.hidden = true;
+
+  const actions = document.createElement("div");
+  actions.className = "plan-item-actions";
+  const openButton = document.createElement("button");
+  openButton.type = "button";
+  openButton.className = "item-open";
+  openButton.textContent = "자세히 보기";
+  openButton.setAttribute("aria-expanded", "false");
+  openButton.setAttribute("aria-controls", detail.id);
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "item-delete";
+  deleteButton.textContent = "삭제";
+  deleteButton.setAttribute("aria-label", plan.subject + " 계획 삭제");
+  actions.append(openButton, deleteButton);
+
+  item.append(head, detail, actions);
+  return item;
+}
+
+// 목록을 지금 상태(savedPlans + 고른 목표)에 맞게 다시 그림
+// notice: 저장·삭제 직후 함께 보여 줄 문구
+function renderList(notice) {
+  const goal = listFilter.value;
+  const shownPlans = savedPlans.filter(function (plan) {
+    return goal === "all" || plan.goal === goal;
+  });
+
+  planItems.innerHTML = "";
+  shownPlans.forEach(function (plan) {
+    planItems.append(makePlanItem(plan));
+  });
+
+  // 개수 문구: 전체 보기 / 목표로 찾기
+  let countText = goal === "all"
+    ? "저장한 계획 " + savedPlans.length + "개 (최대 " + maxPlans + "개)"
+    : goalNames[goal] + " 계획 " + shownPlans.length + "개 / 전체 " + savedPlans.length + "개";
+  if (notice) {
+    countText = notice + " " + countText;
+  }
+  listMessage.textContent = countText;
+
+  // 결과 없음: 저장한 계획이 아예 없을 때 / 고른 목표에 맞는 계획이 없을 때
+  listEmpty.hidden = shownPlans.length > 0;
+  if (savedPlans.length === 0) {
+    listEmptyText.textContent = "아직 저장한 계획이 없어요. 계획을 만든 뒤 완료 화면에서 '내 계획 목록에 저장'을 눌러 주세요.";
+    listShowAll.hidden = true;
+    listNewPlan.textContent = "첫 공부 계획 만들기";
+  } else if (shownPlans.length === 0) {
+    listEmptyText.textContent = "'" + goalNames[goal] + "' 목표로 저장한 계획이 없어요. 전체 계획을 보거나 새 계획을 만들어 보세요.";
+    listShowAll.hidden = false;
+    listNewPlan.textContent = "새 계획 만들기";
+  }
+}
+
+listFilter.addEventListener("change", function () {
+  newPlanId = null;
+  renderList();
+});
+
+// 결과 없음 → 다른 선택 1: 전체 보기
+listShowAll.addEventListener("click", function () {
+  listFilter.value = "all";
+  renderList();
+  listFilter.focus();
+});
+
+// 결과 없음 → 다른 선택 2: 계획 만들기 흐름을 1단계부터 다시 열기
+listNewPlan.addEventListener("click", function () {
+  resetPlan();
+  planFlow.hidden = false;
+  planStart.setAttribute("aria-expanded", "true");
+  planFlow.scrollIntoView({ behavior: "smooth", block: "start" });
+  subjectName.focus({ preventScroll: true });
+});
+
+// ---------- 22. 카드 버튼: 자세히 보기 / 삭제 ----------
+// 카드는 저장할 때마다 새로 만들어지므로 목록(ul) 하나에 click을 연결해 처리
+planItems.addEventListener("click", function (event) {
+  const button = event.target.closest("button");
+  if (!button) {
+    return;
+  }
+  const item = button.closest(".plan-item");
+  const plan = savedPlans.find(function (p) {
+    return String(p.id) === item.dataset.id;
+  });
+
+  if (button.classList.contains("item-open")) {
+    const detail = item.querySelector(".plan-item-detail");
+    const isOpen = detail.hidden;          // 숨겨져 있었으면 이제 연다
+    detail.hidden = !isOpen;
+    button.textContent = isOpen ? "접기" : "자세히 보기";
+    button.setAttribute("aria-expanded", String(isOpen));
+    return;
+  }
+
+  // 삭제: 바로 지우지 않고 확인 팝업으로 한 번 더 묻기
+  deleteTargetId = plan.id;
+  deleteText.textContent = plan.subject + " · " + goalNames[plan.goal] + " · 하루 " + plan.timeText
+    + " — 지운 계획은 되돌릴 수 없어요.";
+  deleteConfirm.showModal();
+});
+
+// 취소: 팝업만 닫고 목록은 그대로
+document.querySelector("#deleteCancel").addEventListener("click", function () {
+  deleteConfirm.close();
+  deleteTargetId = null;
+});
+
+// 삭제 확정: 목록에서 빼고 다시 그림
+document.querySelector("#deleteSubmit").addEventListener("click", function () {
+  const target = savedPlans.find(function (plan) {
+    return plan.id === deleteTargetId;
+  });
+  savedPlans = savedPlans.filter(function (plan) {
+    return plan.id !== deleteTargetId;
+  });
+  storePlans();
+  deleteConfirm.close();
+
+  // 완료 화면에 떠 있는 계획을 지웠다면 다시 저장할 수 있게 저장 버튼을 되돌림
+  if (deleteTargetId === currentSavedId) {
+    resetSaveState();
+    saveMessage.textContent = "목록에서 이 계획을 지웠어요. 필요하면 다시 저장할 수 있어요.";
+  }
+
+  deleteTargetId = null;
+  newPlanId = null;
+  renderList("'" + target.subject + "' 계획을 지웠어요.");
+  listFilter.focus();
+});
+
+// 처음 열었을 때 저장돼 있던 목록을 그림
+renderList();
