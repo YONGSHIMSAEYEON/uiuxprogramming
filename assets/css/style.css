@@ -450,8 +450,7 @@ section p {
 
 #planFlow[hidden],
 .plan-step[hidden],
-#examLabel[hidden],
-#examDate[hidden] {
+.extra-area[hidden] {
   display: none;
 }
 
@@ -478,8 +477,7 @@ section p {
   border-radius: 10px;
 }
 
-.plan-step h4,
-#planConfirm h4 {
+.plan-step h4 {
   margin: 0 0 14px;
   color: var(--main-dark);
   font-size: 18px;
@@ -529,10 +527,6 @@ section p {
   display: none;
 }
 
-.plan-step .has-error {             /* 고쳐야 할 칸: 빨간 테두리 */
-  border-color: #c62828;
-  background-color: #fff7f7;
-}
 
 #planSummary {
   display: grid;
@@ -575,8 +569,7 @@ section p {
   color: var(--main-dark);
 }
 
-#planConfirm,
-#deleteConfirm {                    /* 확정 팝업 · 삭제 확인 팝업 */
+#deleteConfirm {                    /* 삭제 확인 팝업 */
   width: calc(100% - 32px);
   max-width: 420px;
   padding: 24px;
@@ -584,12 +577,10 @@ section p {
   border-radius: 12px;
 }
 
-#planConfirm::backdrop,
 #deleteConfirm::backdrop {
   background-color: rgba(31, 36, 48, 0.6);
 }
 
-#planConfirm p,
 #deleteConfirm p {
   word-break: break-all;
 }
@@ -608,11 +599,6 @@ section p {
   background-color: #c62828;
 }
 
-#planSave:disabled {                /* 저장 완료: 회색 + 누를 수 없음 */
-  border-color: #9aa3b5;
-  background-color: #9aa3b5;
-  cursor: not-allowed;
-}
 
 #planList {
   margin: 20px 0 0;
@@ -744,6 +730,137 @@ section p {
 
 #listEmpty p {
   margin: 0;
+}
+
+/* ---------- 9-5. 9주차: 계획 만들기 폼의 입력 상태 ----------
+   기본 → 초점(focus-visible) → 조건 충족(is-valid, 초록) → 오류(has-error, 빨강)
+   → 저장 중(is-loading, 버튼 회색 잠금) → 실패(is-error) 상태를 class로 구분한다. */
+.field {
+  margin: 0 0 16px;
+}
+
+.required {                         /* 필수 표시 */
+  margin-left: 4px;
+  color: #c62828;
+  font-size: 13px;
+}
+
+.plan-step fieldset {
+  min-width: 0;
+  padding: 0;
+  border: none;
+}
+
+.plan-step legend {
+  padding: 0;
+  margin: 0 0 6px;
+  font-weight: bold;
+}
+
+.field-meta {                       /* 안내와 글자 수를 한 줄에 */
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 360px;
+  margin-top: 6px;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+#subjectCount {
+  flex-shrink: 0;
+  font-weight: bold;
+}
+
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-step label.choice {           /* 라디오·체크박스를 누르기 쉬운 상자로 */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.plan-step label.choice input {
+  width: auto;
+  margin: 0;
+}
+
+.plan-step label.choice:has(input:checked) {   /* 고른 항목: 파란 테두리 */
+  border-color: var(--main);
+  background-color: #eef3ff;
+  color: var(--main-dark);
+  font-weight: bold;
+}
+
+.extra-area {                       /* 선택에 따라 나타나는 추가 입력 영역 */
+  padding: 12px 14px;
+  border-left: 4px solid var(--main);
+  border-radius: 6px;
+  background-color: #f7f9ff;
+}
+
+.plan-step input:focus-visible,
+.plan-step select:focus-visible,
+.plan-step label.choice:has(input:focus-visible) {
+  outline: 3px solid #a9c2fb;       /* 키보드로 이동한 위치가 잘 보이게 */
+  outline-offset: 1px;
+}
+
+.field.is-valid input {             /* 조건 충족: 초록 테두리 + 초록 안내 */
+  border-color: #2e9d57;
+}
+
+.field.is-valid .field-meta span:first-child {
+  color: #245c3a;
+  font-weight: bold;
+}
+
+.field.has-error input,             /* 오류: 빨간 테두리 */
+.field.has-error select,
+.field.has-error label.choice {
+  border-color: #c62828;
+  background-color: #fff7f7;
+}
+
+.test-switch {                      /* 확인용 실패 스위치: 눈에 덜 띄게 */
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: normal !important;
+}
+
+.test-switch input {
+  width: auto !important;
+}
+
+#planStatus:empty {
+  display: none;
+}
+
+.status-message.is-loading {        /* 저장 중: 연한 보라 */
+  background-color: #efeefe;
+  color: #3b3486;
+  font-weight: bold;
+}
+
+.plan-actions button:disabled {     /* 저장 중: 회색 + 누를 수 없음 */
+  border-color: #9aa3b5;
+  background-color: #9aa3b5;
+  color: #ffffff;
+  cursor: wait;
 }
 
 /* ---------- 10. 꼬리말(footer) ---------- */
@@ -878,8 +995,13 @@ footer p {
   }
 
   .plan-step input,
-  .plan-step select {
+  .plan-step select,
+  .field-meta {
     max-width: none;
+  }
+
+  .choice-row {
+    flex-direction: column;           /* 목표 선택지를 한 줄에 하나씩 */
   }
 
   .plan-actions {
