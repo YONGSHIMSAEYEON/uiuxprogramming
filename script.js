@@ -1,4 +1,4 @@
-// 공부메이트 - 5·6·7·8주차 JavaScript
+// 공부메이트 - 5·6·7·8·9주차 JavaScript
 // 5주차 기능: "무료로 시작하기" 이메일 신청
 //   폼을 제출하면 입력값을 확인해서 상황에 맞는 안내 문구를 보여 주고,
 //   신청이 끝나면 버튼을 "신청 완료" 상태로 바꿔 중복 신청을 막는다.
@@ -10,6 +10,9 @@
 // 8주차(중간고사) 기능: "내 공부 계획" 목록
 //   완료 화면에서 저장(중복·최대 개수 검사) → 목록에 카드 추가
 //   → 목표로 찾기(결과 없음 안내) · 자세히 보기 · 삭제(확인 팝업, 취소 가능).
+// 9주차 기능: 계획 만들기를 하나의 form으로 개선
+//   글자 수·조건 실시간 표시, 오류 문구 표시/해제, 선택에 따른 추가 입력(disabled),
+//   submit 한 곳에서 최종 검사 → 저장 중(버튼 잠금) → 완료 / 실패(입력 유지, 다시 시도).
 
 // 개발자 도구 Console에서 script.js 연결 여부를 확인하기 위한 문장
 console.log("JavaScript가 연결되었습니다.");
@@ -252,32 +255,54 @@ alarmButton.addEventListener("click", handleAlarmClick);
 
 // =====================================================================
 // 7주차: 사용자 흐름 — 첫 공부 계획 만들기
-//   시작 → 1 과목 입력 → 2 목표 선택 → 3 확인(확정 팝업) → 완료
+// 9주차: 세 단계를 하나의 form으로 묶고 입력 경험을 개선
+//   입력 중 글자 수·조건 표시 → 단계별 검사 → 조건부 입력(disabled)
+//   → submit 한 곳에서 최종 검사 → 저장 중 / 완료 / 실패(다시 시도)
 // =====================================================================
 
 // ---------- 11. 흐름에 쓰는 요소 선택 ----------
 const planStart = document.querySelector("#planStart");
 const planFlow = document.querySelector("#planFlow");
+const planForm = document.querySelector("#planForm");
 const planSteps = document.querySelectorAll(".plan-step");
 const planProgress = document.querySelector("#planProgress");
 
 const subjectName = document.querySelector("#subjectName");
+const subjectField = document.querySelector("#subjectField");
+const subjectState = document.querySelector("#subjectState");
+const subjectCount = document.querySelector("#subjectCount");
 const subjectError = document.querySelector("#subjectError");
-const planGoal = document.querySelector("#planGoal");
+
+const goalField = document.querySelector("#goalField");
+const goalRadios = document.querySelectorAll('input[name="goal"]');
+const goalExam = document.querySelector("#goalExam");
 const goalError = document.querySelector("#goalError");
-const examLabel = document.querySelector("#examLabel");
+const examArea = document.querySelector("#examArea");
 const examDate = document.querySelector("#examDate");
 const examError = document.querySelector("#examError");
 const studyTime = document.querySelector("#studyTime");
 
-const planConfirm = document.querySelector("#planConfirm");
-const confirmText = document.querySelector("#confirmText");
+const wantReminder = document.querySelector("#wantReminder");
+const reminderArea = document.querySelector("#reminderArea");
+const reminderTime = document.querySelector("#reminderTime");
+const reminderError = document.querySelector("#reminderError");
+
+const simulateFail = document.querySelector("#simulateFail");
+const planStatus = document.querySelector("#planStatus");
+const planSubmit = document.querySelector("#planSubmit");
+const planBack3 = document.querySelector("#planBack3");
 const planResult = document.querySelector("#planResult");
 
 const goalNames = { exam: "시험 대비", assignment: "과제 제출", review: "매일 복습" };
+const subjectMin = 2;
+const subjectMax = 20;
+
+let currentStep = 1;     // Number: 지금 보이는 단계
+let isSaving = false;    // Boolean: 저장 중인가 (중복 제출 방지)
 
 // ---------- 12. 현재 단계만 보여 주는 함수 ----------
 function showStep(step) {
+  currentStep = step;
   planSteps.forEach(function (item) {
     item.hidden = Number(item.dataset.step) !== step;
   });
@@ -288,66 +313,63 @@ function showStep(step) {
   planProgress.classList.toggle("is-done", step === 4);
 }
 
-// 오류 표시 / 지우기를 한 곳에서 처리
-function showError(input, errorBox, message) {
+// ---------- 13. 오류 표시 / 해제를 한 곳에서 처리 ----------
+// inputs: 오류를 표시할 입력칸들(라디오는 여러 개), field: 테두리 색을 바꿀 묶음
+function showError(inputs, field, errorBox, message) {
   errorBox.textContent = message;
-  input.classList.add("has-error");
-  input.setAttribute("aria-invalid", "true");
-  input.focus();
+  field.classList.remove("is-valid");
+  field.classList.add("has-error");
+  inputs.forEach(function (input) {
+    input.setAttribute("aria-invalid", "true");
+  });
+  return false;
 }
 
-function clearError(input, errorBox) {
+function clearError(inputs, field, errorBox) {
   errorBox.textContent = "";
-  input.classList.remove("has-error");
-  input.removeAttribute("aria-invalid");
+  field.classList.remove("has-error");
+  inputs.forEach(function (input) {
+    input.removeAttribute("aria-invalid");
+  });
+  return true;
 }
 
-// ---------- 13. 시작: 핵심 행동 버튼 → 1단계 ----------
-planStart.addEventListener("click", function () {
-  planFlow.hidden = false;
-  planStart.setAttribute("aria-expanded", "true");
-  showStep(1);
-  subjectName.focus();
-});
+// ---------- 14. 항목별 검사 함수 (통과하면 true) ----------
+function selectedGoal() {
+  const checked = document.querySelector('input[name="goal"]:checked');
+  return checked ? checked.value : "";
+}
 
-// ---------- 14. 1단계: 과목 이름 검사 ----------
-// 행동: '공부 목표 고르기' click → 조건: trim()한 과목 이름이 비었는가?
-// → 비었으면 현재 단계에 머물며 고칠 방법 안내 / 있으면 2단계로
-document.querySelector("#planNext1").addEventListener("click", function () {
-  if (subjectName.value.trim() === "") {
-    showError(subjectName, subjectError, "공부할 과목 이름을 입력해 주세요. 예) 데이터베이스");
-    return;
+function isDuplicateSubject(subject) {
+  return savedPlans.some(function (plan) {
+    return plan.subject.toLowerCase() === subject.toLowerCase();
+  });
+}
+
+// 과목: 빈 값 → 2자 미만 → 이미 저장한 과목 순서로 검사
+function validateSubject() {
+  const subject = subjectName.value.trim();
+  if (subject === "") {
+    return showError([subjectName], subjectField, subjectError,
+      "과목 이름을 입력해 주세요. 예) 데이터베이스");
   }
-  clearError(subjectName, subjectError);
-  showStep(2);
-  planGoal.focus();
-});
-
-// 입력을 고치기 시작하면 오류 표시를 지움
-subjectName.addEventListener("input", function () {
-  if (subjectName.value.trim() !== "") {
-    clearError(subjectName, subjectError);
+  if (subject.length < subjectMin) {
+    return showError([subjectName], subjectField, subjectError,
+      "과목 이름을 " + subjectMin + "자 이상 입력해 주세요. 지금 " + subject.length + "자예요.");
   }
-});
-
-// ---------- 15. 2단계: 목표에 따라 시험 날짜 칸을 보이거나 숨김 ----------
-planGoal.addEventListener("change", function () {
-  const isExam = planGoal.value === "exam";
-  examLabel.hidden = !isExam;
-  examDate.hidden = !isExam;
-
-  if (planGoal.value !== "") {
-    clearError(planGoal, goalError);
+  if (isDuplicateSubject(subject)) {
+    return showError([subjectName], subjectField, subjectError,
+      "'" + subject + "'은(는) 이미 내 공부 계획에 있어요. 다른 과목을 적거나, 목록에서 예전 계획을 지운 뒤 다시 시도해 주세요.");
   }
-  if (!isExam) {
-    examDate.value = "";              // 보이지 않는 칸은 값도 검사도 하지 않음
-    clearError(examDate, examError);
-  }
-});
+  return clearError([subjectName], subjectField, subjectError);
+}
 
-examDate.addEventListener("change", function () {
-  clearError(examDate, examError);
-});
+function validateGoal() {
+  if (selectedGoal() === "") {
+    return showError(goalRadios, goalField, goalError, "이번 주 공부 목표를 하나 골라 주세요.");
+  }
+  return clearError(goalRadios, goalField, goalError);
+}
 
 // 오늘 날짜를 "2026-10-14" 형식으로 (input type="date"와 같은 형식)
 function todayText() {
@@ -357,111 +379,312 @@ function todayText() {
   return now.getFullYear() + "-" + month + "-" + day;
 }
 
-document.querySelector("#planNext2").addEventListener("click", function () {
-  if (planGoal.value === "") {
-    showError(planGoal, goalError, "이번 주 공부 목표를 하나 골라 주세요.");
-    return;
+// 숨겨진(disabled) 칸은 검사하지 않음
+function validateExamDate() {
+  if (examDate.disabled) {
+    return clearError([examDate], examArea, examError);
   }
-  clearError(planGoal, goalError);
-
-  if (planGoal.value === "exam") {
-    if (examDate.value === "") {
-      showError(examDate, examError, "시험 대비를 골랐다면 시험 날짜를 선택해 주세요.");
-      return;
-    }
-    if (examDate.value < todayText()) {
-      showError(examDate, examError, "이미 지난 날짜예요. 오늘 이후의 시험 날짜를 골라 주세요.");
-      return;
-    }
+  if (examDate.value === "") {
+    return showError([examDate], examArea, examError, "시험 대비를 골랐다면 시험 날짜를 선택해 주세요.");
   }
-  clearError(examDate, examError);
+  if (examDate.value < todayText()) {
+    return showError([examDate], examArea, examError, "이미 지난 날짜예요. 오늘(" + todayText() + ") 이후의 날짜를 골라 주세요.");
+  }
+  return clearError([examDate], examArea, examError);
+}
 
-  showSummary();
-  showStep(3);
+function validateReminder() {
+  if (reminderTime.disabled) {
+    return clearError([reminderTime], reminderArea, reminderError);
+  }
+  if (reminderTime.value === "") {
+    return showError([reminderTime], reminderArea, reminderError,
+      "알림 받을 시간을 골라 주세요. 알림이 필요 없다면 '매일 공부 알림 받기' 체크를 해제해 주세요.");
+  }
+  return clearError([reminderTime], reminderArea, reminderError);
+}
+
+// 한 단계 안의 항목을 모두 검사 (첫 오류에서 멈추지 않고 모든 오류를 표시)
+function validateStep(step) {
+  if (step === 1) {
+    return validateSubject();
+  }
+  if (step === 2) {
+    const goalOk = validateGoal();
+    const examOk = validateExamDate();
+    const reminderOk = validateReminder();
+    return goalOk && examOk && reminderOk;
+  }
+  return true;
+}
+
+// 그 단계의 첫 번째 오류 칸으로 커서 이동
+function focusFirstError(step) {
+  const stepBox = document.querySelector('.plan-step[data-step="' + step + '"]');
+  const firstError = stepBox.querySelector('[aria-invalid="true"]');
+  if (firstError) {
+    firstError.focus();
+  }
+}
+
+// ---------- 15. input 이벤트: 입력하는 동안 글자 수와 조건 충족 여부 ----------
+// 글자 수는 입력한 그대로 세고, 조건 검사는 앞뒤 공백을 뺀 값으로 한다.
+// 오류 문구는 입력할 때마다 새로 띄우지 않고, 이미 오류가 있을 때만 다시 검사해 고쳐지면 해제한다.
+function updateSubjectState() {
+  const length = subjectName.value.length;
+  const subject = subjectName.value.trim();
+  subjectCount.textContent = length + " / " + subjectMax + "자";
+
+  const isOk = subject.length >= subjectMin && !isDuplicateSubject(subject);
+  if (subject === "") {
+    subjectState.textContent = "과목 이름을 2자 이상 입력해 주세요.";
+  } else if (subject.length < subjectMin) {
+    subjectState.textContent = "조금만 더! " + subjectMin + "자 이상이어야 해요.";
+  } else if (!isOk) {
+    subjectState.textContent = "이미 저장한 과목이에요.";
+  } else {
+    subjectState.textContent = "입력 조건을 충족했어요.";
+  }
+  subjectField.classList.toggle("is-valid", isOk);
+
+  if (subjectName.getAttribute("aria-invalid") === "true") {
+    validateSubject();
+  }
+}
+
+subjectName.addEventListener("input", updateSubjectState);
+
+// ---------- 16. change 이벤트: 선택에 따라 추가 입력 영역 표시 + disabled ----------
+// 보이는 상태(hidden) · 입력 가능 상태(disabled) · aria-expanded를 같은 값으로 함께 바꾼다.
+// 숨긴 칸은 disabled라 제출값(FormData)에서 빠지고, 값은 남겨 두어 다시 고르면 그대로 보인다.
+function toggleArea(area, input, controller, isOpen) {
+  area.hidden = !isOpen;
+  input.disabled = !isOpen;
+  controller.setAttribute("aria-expanded", String(isOpen));
+}
+
+function handleGoalChange() {
+  toggleArea(examArea, examDate, goalExam, selectedGoal() === "exam");
+  clearError(goalRadios, goalField, goalError);
+  if (examDate.disabled) {
+    clearError([examDate], examArea, examError);
+  }
+}
+
+goalRadios.forEach(function (radio) {
+  radio.addEventListener("change", handleGoalChange);
 });
 
-// ---------- 16. 3단계: 입력·선택한 값을 확인 화면에 반영 ----------
-function goalText() {
-  let text = goalNames[planGoal.value];
-  if (planGoal.value === "exam") {
-    text += " (시험일 " + examDate.value + ")";
+wantReminder.addEventListener("change", function () {
+  toggleArea(reminderArea, reminderTime, wantReminder, wantReminder.checked);
+  if (reminderTime.disabled) {
+    clearError([reminderTime], reminderArea, reminderError);
   }
-  return text;
+});
+
+// 오류가 난 칸을 고치면 바로 다시 검사해서 오류를 해제
+examDate.addEventListener("change", validateExamDate);
+reminderTime.addEventListener("change", validateReminder);
+
+// ---------- 17. 단계 이동 (button) ----------
+planStart.addEventListener("click", function () {
+  planFlow.hidden = false;
+  planStart.setAttribute("aria-expanded", "true");
+  showStep(1);
+  subjectName.focus();
+});
+
+// 다음: 현재 단계를 검사해서 통과하면 다음 단계, 아니면 첫 오류 칸으로
+function goNext(step) {
+  if (!validateStep(step)) {
+    focusFirstError(step);
+    return;
+  }
+  if (step === 2) {
+    showSummary();
+  }
+  showStep(step + 1);
+  if (step === 1) {
+    goalRadios[0].focus();
+  } else {
+    planSubmit.focus();
+  }
 }
 
-function showSummary() {
-  document.querySelector("#summarySubject").textContent = subjectName.value.trim();
-  document.querySelector("#summaryGoal").textContent = goalText();
-  document.querySelector("#summaryTime").textContent = studyTime.options[studyTime.selectedIndex].text;
-}
+document.querySelector("#planNext1").addEventListener("click", function () {
+  goNext(1);
+});
+document.querySelector("#planNext2").addEventListener("click", function () {
+  goNext(2);
+});
 
 // 이전: 값은 그대로 두고 단계만 이동
 document.querySelector("#planBack2").addEventListener("click", function () {
   showStep(1);
   subjectName.focus();
 });
-document.querySelector("#planBack3").addEventListener("click", function () {
+planBack3.addEventListener("click", function () {
   showStep(2);
-  planGoal.focus();
+  goalRadios[0].focus();
 });
 
-// ---------- 17. 확정 팝업 → 완료 ----------
-document.querySelector("#planComplete").addEventListener("click", function () {
-  confirmText.textContent = subjectName.value.trim() + " · " + goalText() + " · 하루 "
-    + studyTime.options[studyTime.selectedIndex].text;
-  planConfirm.showModal();
+// ---------- 18. 3단계: 입력·선택한 값을 확인 화면에 반영 ----------
+function goalText(goal, date) {
+  let text = goalNames[goal];
+  if (goal === "exam") {
+    text += " (시험일 " + date + ")";
+  }
+  return text;
+}
+
+function reminderText(time) {
+  if (!time) {
+    return "받지 않음";
+  }
+  return "매일 " + reminderTime.querySelector('option[value="' + time + '"]').text;
+}
+
+function showSummary() {
+  document.querySelector("#summarySubject").textContent = subjectName.value.trim();
+  document.querySelector("#summaryGoal").textContent = goalText(selectedGoal(), examDate.value);
+  document.querySelector("#summaryTime").textContent = studyTime.options[studyTime.selectedIndex].text;
+  document.querySelector("#summaryReminder").textContent = reminderText(reminderTime.disabled ? "" : reminderTime.value);
+}
+
+// ---------- 19. 제출 상태: 기본 / 저장 중 / 실패 ----------
+function setSubmitState(state, message) {
+  isSaving = state === "loading";
+  planSubmit.disabled = isSaving;           // 저장 중에는 버튼을 잠가 중복 제출을 막음
+  planBack3.disabled = isSaving;
+  planForm.setAttribute("aria-busy", String(isSaving));
+  planStatus.classList.remove("is-loading", "is-error");
+
+  if (state === "loading") {
+    planSubmit.textContent = "저장 중…";
+    planStatus.textContent = "계획을 저장하고 있어요. 잠시만 기다려 주세요.";
+    planStatus.classList.add("is-loading");
+  } else if (state === "error") {
+    planSubmit.textContent = "다시 시도";
+    planStatus.textContent = message;
+    planStatus.classList.add("is-error");
+  } else {
+    planSubmit.textContent = "계획 만들기";
+    planStatus.textContent = "";
+  }
+}
+
+// ---------- 20. submit: 최종 검사 → 저장 ----------
+// '계획 만들기' 버튼 클릭과 입력칸에서 누른 Enter가 모두 이 submit 이벤트로 들어온다.
+planForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  if (isSaving) {
+    return;                                  // 저장 중에 다시 들어온 제출은 무시
+  }
+
+  // 1·2단계에서 Enter를 누르면 제출 대신 '다음'과 같이 동작
+  if (currentStep < 3) {
+    goNext(currentStep);
+    return;
+  }
+
+  // 모든 단계를 다시 검사하고, 오류가 있으면 그 단계를 열어 첫 오류 칸으로
+  for (let step = 1; step <= 2; step += 1) {
+    if (!validateStep(step)) {
+      showStep(step);
+      focusFirstError(step);
+      return;
+    }
+  }
+
+  // 이름(name)이 있고 disabled가 아닌 칸의 값만 모임
+  const data = new FormData(planForm);
+  console.log("제출값:", Object.fromEntries(data));
+
+  setSubmitState("loading");
+  setTimeout(function () {
+    savePlan(data);
+  }, 1200);                                  // 서버 대신 저장에 걸리는 시간을 흉내
 });
 
-// 다시 확인(취소): 팝업만 닫고 확인 화면과 값은 그대로
-document.querySelector("#confirmCancel").addEventListener("click", function () {
-  planConfirm.close();
-});
+// 저장 결과: 성공이면 완료 화면, 실패면 입력값을 그대로 두고 다시 시도 안내
+function savePlan(data) {
+  if (simulateFail.checked) {
+    setSubmitState("error", "저장하지 못했어요. (확인용 실패) 입력한 내용은 그대로 있어요. 체크를 해제하고 '다시 시도'를 눌러 주세요.");
+    planSubmit.focus();
+    return;
+  }
+  if (savedPlans.length >= maxPlans) {
+    setSubmitState("error", "목록은 최대 " + maxPlans + "개까지라 저장하지 못했어요. 아래 '내 공부 계획'에서 다 끝난 계획을 지운 뒤 '다시 시도'를 눌러 주세요.");
+    planSubmit.focus();
+    return;
+  }
 
-document.querySelector("#confirmSubmit").addEventListener("click", function () {
-  planConfirm.close();
-  planResult.textContent = subjectName.value.trim() + " · " + goalText() + " 계획이 완성되었습니다. "
-    + "매일 " + studyTime.options[studyTime.selectedIndex].text + "씩 오늘의 할 일로 나눠 드릴게요.";
+  const plan = {
+    id: Date.now(),
+    subject: data.get("subject").trim(),
+    goal: data.get("goal"),
+    examDate: data.get("examDate") || "",            // 숨겨진(disabled) 칸이면 null → 빈 값
+    timeText: studyTime.options[studyTime.selectedIndex].text,
+    reminderTime: data.get("reminderTime") || "",
+    savedDate: todayText()
+  };
+  savedPlans.push(plan);
+
+  if (!storePlans()) {
+    savedPlans.pop();
+    setSubmitState("error", "브라우저 저장소에 저장하지 못했어요. 입력한 내용은 그대로 있어요. 잠시 뒤 '다시 시도'를 눌러 주세요.");
+    planSubmit.focus();
+    return;
+  }
+
+  setSubmitState("idle");
+  planResult.textContent = plan.subject + " · " + goalText(plan.goal, plan.examDate) + " 계획을 저장했어요. "
+    + "매일 " + plan.timeText + "씩 오늘의 할 일로 나눠 드릴게요."
+    + (plan.reminderTime ? " 공부 알림은 " + reminderText(plan.reminderTime) + "에 보내 드려요." : "");
   planStart.textContent = "공부 계획 완성";
   planStart.disabled = true;
   showStep(4);
-  document.querySelector("#planRestart").focus();
-});
 
-// ---------- 18. 다시 만들기: 입력·선택·오류·진행 상태 초기화 ----------
-// 8주차: '새 계획 만들기' 버튼에서도 쓰도록 함수로 분리
+  newPlanId = plan.id;
+  listFilter.value = "all";       // 다른 목표로 찾던 중이어도 방금 저장한 계획이 보이도록
+  renderList("'" + plan.subject + "' 계획을 목록에 추가했어요.");
+  document.querySelector("#planRestart").focus();
+}
+
+// ---------- 21. 다시 작성: 입력값 · 안내 문구 · 버튼 상태를 함께 초기화 ----------
 function resetPlan() {
-  subjectName.value = "";
-  planGoal.value = "";
-  examDate.value = "";
-  studyTime.value = "60";
-  examLabel.hidden = true;
-  examDate.hidden = true;
-  [subjectName, planGoal, examDate].forEach(function (input) {
-    input.classList.remove("has-error");
-    input.removeAttribute("aria-invalid");
-  });
-  subjectError.textContent = "";
-  goalError.textContent = "";
-  examError.textContent = "";
+  planForm.reset();                          // 입력·선택 값을 처음 값으로
+  toggleArea(examArea, examDate, goalExam, false);
+  toggleArea(reminderArea, reminderTime, wantReminder, false);
+  clearError([subjectName], subjectField, subjectError);
+  clearError(goalRadios, goalField, goalError);
+  clearError([examDate], examArea, examError);
+  clearError([reminderTime], reminderArea, reminderError);
+  updateSubjectState();                      // 글자 수 0 / 20자, 안내 문구 처음으로
+  setSubmitState("idle");
   planResult.textContent = "";
 
   planStart.textContent = "첫 공부 계획 만들기";
   planStart.disabled = false;
-  resetSaveState();
   showStep(1);
   subjectName.focus();
 }
 
 document.querySelector("#planRestart").addEventListener("click", resetPlan);
 
+document.querySelector("#planGoList").addEventListener("click", function () {
+  document.querySelector("#planList").scrollIntoView({ behavior: "smooth", block: "start" });
+  listFilter.focus({ preventScroll: true });
+});
+
 // =====================================================================
 // 8주차(중간고사): 내 공부 계획 목록
-//   완료 → [내 계획 목록에 저장] → 목록 카드 → 목표로 찾기 / 자세히 보기 / 삭제
+//   완료 → 목록 카드 → 목표로 찾기 / 자세히 보기 / 삭제
+//   (9주차: 저장은 계획 만들기 form의 submit에서 처리 — 위 20번)
 // =====================================================================
 
-// ---------- 19. 목록에 쓰는 요소와 상태 ----------
-const planSave = document.querySelector("#planSave");
-const saveMessage = document.querySelector("#saveMessage");
+// ---------- 22. 목록에 쓰는 요소와 상태 ----------
 const listFilter = document.querySelector("#listFilter");
 const listMessage = document.querySelector("#listMessage");
 const planItems = document.querySelector("#planItems");
@@ -474,8 +697,7 @@ const deleteText = document.querySelector("#deleteText");
 
 const maxPlans = 5;               // 목록에 둘 수 있는 계획 수
 const storageKey = "studymate-plans";
-let savedPlans = loadPlans();     // Array: 저장한 계획 { id, subject, goal, examDate, timeText, savedDate }
-let currentSavedId = null;        // 지금 완료 화면의 계획이 저장됐다면 그 id
+let savedPlans = loadPlans();     // Array: 저장한 계획 { id, subject, goal, examDate, timeText, reminderTime, savedDate }
 let deleteTargetId = null;        // 삭제 팝업에서 지울 계획의 id
 let newPlanId = null;             // 방금 저장해서 초록으로 강조할 계획의 id
 
@@ -490,74 +712,18 @@ function loadPlans() {
   }
 }
 
+// 저장에 성공하면 true, 저장소를 쓸 수 없으면 false
 function storePlans() {
   try {
     localStorage.setItem(storageKey, JSON.stringify(savedPlans));
+    return true;
   } catch (error) {
-    console.log("저장소를 쓸 수 없어 이번 방문 동안만 목록을 유지합니다.");
+    console.log("저장소에 저장하지 못했습니다.", error);
+    return false;
   }
 }
 
-// 저장 버튼과 안내 문구를 처음 상태로
-function resetSaveState() {
-  currentSavedId = null;
-  planSave.disabled = false;
-  planSave.textContent = "내 계획 목록에 저장";
-  saveMessage.textContent = "이 계획을 '내 공부 계획' 목록에 저장해 두면 언제든 다시 열어 볼 수 있어요.";
-  saveMessage.classList.remove("is-error", "is-success");
-}
-
-function showSaveError(message) {
-  saveMessage.textContent = message;
-  saveMessage.classList.remove("is-success");
-  saveMessage.classList.add("is-error");
-  planSave.focus();
-}
-
-// ---------- 20. 저장: 완료한 계획을 목록에 추가 ----------
-// 행동: '내 계획 목록에 저장' click
-// → 조건 1: 목록이 가득 찼는가? / 조건 2: 같은 과목이 이미 있는가?
-// → 실패하면 이유와 고칠 방법 안내(완료 화면 유지) / 성공하면 목록에 추가
-planSave.addEventListener("click", function () {
-  const subject = subjectName.value.trim();
-
-  if (savedPlans.length >= maxPlans) {
-    showSaveError("목록은 최대 " + maxPlans + "개까지예요. 아래 '내 공부 계획'에서 다 끝난 계획을 지운 뒤 다시 저장해 주세요.");
-    return;
-  }
-
-  const samePlan = savedPlans.find(function (plan) {
-    return plan.subject.toLowerCase() === subject.toLowerCase();
-  });
-  if (samePlan) {
-    showSaveError("'" + subject + "' 계획이 이미 목록에 있어요. 목록에서 예전 계획을 지운 뒤 저장하거나, '다시 만들기'로 다른 과목을 만들어 주세요.");
-    return;
-  }
-
-  const plan = {
-    id: Date.now(),
-    subject: subject,
-    goal: planGoal.value,
-    examDate: examDate.value,
-    timeText: studyTime.options[studyTime.selectedIndex].text,
-    savedDate: todayText()
-  };
-  savedPlans.push(plan);
-  storePlans();
-
-  currentSavedId = plan.id;
-  newPlanId = plan.id;
-  planSave.disabled = true;
-  planSave.textContent = "저장 완료";
-  saveMessage.textContent = "'" + subject + "' 계획을 저장했어요. 아래 '내 공부 계획'에서 다시 열어 볼 수 있어요.";
-  saveMessage.classList.remove("is-error");
-  saveMessage.classList.add("is-success");
-
-  listFilter.value = "all";       // 다른 목표로 찾던 중이어도 방금 저장한 계획이 보이도록
-  renderList("'" + subject + "' 계획을 목록에 추가했어요.");
-});
-
-// ---------- 21. 목록 그리기: 목표로 찾기 + 결과 없음 안내 ----------
+// ---------- 23. 목록 그리기: 목표로 찾기 + 결과 없음 안내 ----------
 // 시험 날짜까지 남은 날 (오늘 = 0, 지났으면 음수)
 function daysUntil(dateText) {
   const oneDay = 24 * 60 * 60 * 1000;
@@ -576,7 +742,11 @@ function detailText(plan) {
       text += " (시험일 " + plan.examDate + " — 이미 지났어요. 다 끝난 계획이면 지워 주세요.)";
     }
   }
-  return text + " · 하루 " + plan.timeText + " · 저장한 날 " + plan.savedDate;
+  text += " · 하루 " + plan.timeText;
+  if (plan.reminderTime) {
+    text += " · 알림 " + reminderText(plan.reminderTime);
+  }
+  return text + " · 저장한 날 " + plan.savedDate;
 }
 
 function makePlanItem(plan) {
@@ -646,7 +816,7 @@ function renderList(notice) {
   // 결과 없음: 저장한 계획이 아예 없을 때 / 고른 목표에 맞는 계획이 없을 때
   listEmpty.hidden = shownPlans.length > 0;
   if (savedPlans.length === 0) {
-    listEmptyText.textContent = "아직 저장한 계획이 없어요. 계획을 만든 뒤 완료 화면에서 '내 계획 목록에 저장'을 눌러 주세요.";
+    listEmptyText.textContent = "아직 저장한 계획이 없어요. '첫 공부 계획 만들기'에서 계획을 만들면 여기에 저장돼요.";
     listShowAll.hidden = true;
     listNewPlan.textContent = "첫 공부 계획 만들기";
   } else if (shownPlans.length === 0) {
@@ -677,7 +847,7 @@ listNewPlan.addEventListener("click", function () {
   subjectName.focus({ preventScroll: true });
 });
 
-// ---------- 22. 카드 버튼: 자세히 보기 / 삭제 ----------
+// ---------- 24. 카드 버튼: 자세히 보기 / 삭제 ----------
 // 카드는 저장할 때마다 새로 만들어지므로 목록(ul) 하나에 click을 연결해 처리
 planItems.addEventListener("click", function (event) {
   const button = event.target.closest("button");
@@ -721,12 +891,6 @@ document.querySelector("#deleteSubmit").addEventListener("click", function () {
   });
   storePlans();
   deleteConfirm.close();
-
-  // 완료 화면에 떠 있는 계획을 지웠다면 다시 저장할 수 있게 저장 버튼을 되돌림
-  if (deleteTargetId === currentSavedId) {
-    resetSaveState();
-    saveMessage.textContent = "목록에서 이 계획을 지웠어요. 필요하면 다시 저장할 수 있어요.";
-  }
 
   deleteTargetId = null;
   newPlanId = null;
